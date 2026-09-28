@@ -95,33 +95,36 @@
 
             async function ottieniEventi() {
                 try {
-                    // Effettuiamo la chiamata tramite il proxy
-                    const response = await fetch(urlConProxy);
-                    if (!response.ok) throw new Error('Errore di connessione al proxy');
-                    
-                    const dataProxy = await response.json();
+                    // Leggiamo il file JSON locale
+                    const response = await fetch('./orario.json');
+                    if (!response.ok) throw new Error('Errore nella lettura del file locale');
                     
                     const datiOrario = await response.json();
-                    console.log("Dati ricevuti dall'API:", datiOrario);
-
-                    // ATTENZIONE: Questo percorso ("datiOrario.lezioni") dipende da come è strutturato 
-                    // il JSON della tua università. Adattalo di conseguenza.
+                    
                     const arrayLezioni = datiOrario.lezioni || datiOrario; 
-
-                    // 4. Filtriamo le materie e le formattiamo per FullCalendar
+                    
+                    // Filtriamo e formattiamo i dati con i nomi corretti dell'API di UniTo
                     const eventiFormattati = arrayLezioni
                         .filter(lezione => {
-                            // Mantiene solo le lezioni il cui nome è presente in "materieScelte"
-                            // Usa toLowerCase() per evitare problemi con maiuscole/minuscole
+                            // Controllo di sicurezza: se manca il nome, la scartiamo per evitare crash
+                            if (!lezione.nome) return false; 
+                            
+                            // Mantiene solo le lezioni incluse in materieScelte
                             return materieScelte.some(materia => 
-                                lezione.nomeMateria.toLowerCase().includes(materia.toLowerCase())
+                                lezione.nome.toLowerCase().includes(materia.toLowerCase())
                             );
                         })
                         .map(lezione => {
-                            // Formato evento richiesto da FullCalendar.js
+                            // Estraiamo l'aula dall'array "aule"
+                            let nomeAula = "";
+                            if (lezione.aule && lezione.aule.length > 0) {
+                                nomeAula = ` - ${lezione.aule[0].des || lezione.aule[0].descrizione || "Aula non definita"}`;
+                            }
+
+                            // Creiamo l'oggetto per FullCalendar
                             return {
-                                title: `${lezione.nomeMateria} - ${lezione.aula}`,
-                                start: lezione.dataInizio, // deve essere in formato ISO 8601 (es: "2026-09-28T09:00:00")
+                                title: `${lezione.nome}${nomeAula}`,
+                                start: lezione.dataInizio, 
                                 end: lezione.dataFine
                             };
                         });
@@ -130,12 +133,11 @@
 
                 } catch (errore) {
                     console.error("Errore nel fetch dell'orario:", errore);
-                    // Messaggio utente pulito, stile iOS
                     document.getElementById('calendario').innerHTML = 
-                        '<p style="text-align:center; color:#ff3b30; padding: 20px;">Impossibile caricare l\'orario. Riprova più tardi.</p>';
+                        '<p style="text-align:center; color:#ff3b30; padding: 20px;">Impossibile caricare l\'orario.</p>';
                     return [];
                 }
-        }
+                                        }
 
 
 
