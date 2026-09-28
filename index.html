@@ -8,6 +8,9 @@
 
     <!-- FullCalendar v6 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <!-- Plugin per il formato iCal -->
+    <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.10/index.global.min.js"></script>
 
     <style>
         :root {
@@ -72,133 +75,67 @@
     </div>
 
     <script>
-            // ==========================================
-            // CONFIGURAZIONE UTENTE
-            // ==========================================
+            document.addEventListener('DOMContentLoaded', function() {
+    // 1. INCOLLA QUI IL TUO LINK ICAL (.ics) FORNITO DALL'UNIVERSITÀ
+    const linkICal = 'https://unito.prod.up.cineca.it:443/api/FiltriICal/impegniICal?id=6abacd7dc3623c00c6658078';
+    
+    // Rimuoviamo temporaneamente il proxy
+    const urlConProxy = linkICal;
 
-            // 1. Inserisci l'URL dell'API della tua università (sostituisci questo di esempio)
-            const urlAPIUniversita = 'https://unito.prod.up.cineca.it/api/Impegni/getImpegniCalendarioPubblico';
+    const materieScelte = [
+        "LFT - LINGUAGGI E FORMALI E TRADUTTORI",
+        "Reti & Sic A - RETI E SICUREZZA DELLE RETI",
+        "Eginn - ECONOMIA E GESTIONE DELLE TECNOLOGIE"
+    ];
 
-            // 2. Codifichiamo l'URL e lo uniamo al proxy CORS
-            const urlConProxy = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlAPIUniversita)}`;
+    const elementoCalendario = document.getElementById('calendario');
 
-            // 3. Scrivi qui i nomi delle materie che vuoi visualizzare
-            const materieScelte = [
-                "LFT - LINGUAGGI E FORMALI E TRADUTTORI",
-                "Reti & Sic A - RETI E SICUREZZA DELLE RETI",
-                "Eginn - ECONOMIA E GESTIONE DELLE TECNOLOGIE"
-            ];
+    const calendario = new FullCalendar.Calendar(elementoCalendario, {
+        initialView: 'timeGridWeek',
+        weekends: false, 
+        slotMinTime: '08:00:00',
+        slotMaxTime: '20:00:00',
+        allDaySlot: false,
+        height: 'auto',
+        headerToolbar: {
+            left: 'prev,next',
+            center: 'title',
+            right: 'today' 
+        },
+        buttonText: { today: 'Oggi' },
+        eventColor: 'var(--colore-accento)',
+        eventTextColor: '#ffffff',
+        eventBorderColor: 'transparent',
 
-            // ==========================================
-            // LOGICA DI FETCH E FILTRAGGIO
-            // ==========================================
+        // Colleghiamo l'iCal tramite proxy
+        events: {
+            url: urlConProxy,
+            format: 'ics'
+        },
 
-            async function ottieniEventi() {
-                try {
-                    // Leggiamo il file JSON locale
-                    const response = await fetch('./orario.json');
-                    if (!response.ok) throw new Error('Errore nella lettura del file locale');
-                    
-                    const datiOrario = await response.json();
-                    
-                    const arrayLezioni = datiOrario.lezioni || datiOrario; 
-                    
-                    // Filtriamo e formattiamo i dati con i nomi corretti dell'API di UniTo
-                    const eventiFormattati = arrayLezioni
-                        .filter(lezione => {
-                            // Controllo di sicurezza: se manca il nome, la scartiamo per evitare crash
-                            if (!lezione.nome) return false; 
-                            
-                            // Mantiene solo le lezioni incluse in materieScelte
-                            return materieScelte.some(materia => 
-                                lezione.nome.toLowerCase().includes(materia.toLowerCase())
-                            );
-                        })
-                        .map(lezione => {
-                            // Estraiamo l'aula dall'array "aule"
-                            let nomeAula = "";
-                            if (lezione.aule && lezione.aule.length > 0) {
-                                nomeAula = ` - ${lezione.aule[0].des || lezione.aule[0].descrizione || "Aula non definita"}`;
-                            }
+        // FILTRO: Nascondiamo visivamente le materie che non ci interessano
+        eventDidMount: function(info) {
+            const titoloEvento = info.event.title.toLowerCase();
+            
+            const daMostrare = materieScelte.some(materia => 
+                titoloEvento.includes(materia.toLowerCase())
+            );
+            
+            if (!daMostrare) {
+                // Nasconde l'evento dalla griglia
+                info.el.style.display = 'none'; 
+            }
+        },
+        
+        // Gestione errori
+        eventSourceFailure: function() {
+            document.getElementById('calendario').innerHTML = 
+                '<p style="text-align:center; color:#ff3b30; padding: 20px;">Impossibile caricare l\'iCal.</p>';
+        }
+    });
 
-                            // Creiamo l'oggetto per FullCalendar
-                            return {
-                                title: `${lezione.nome}${nomeAula}`,
-                                start: lezione.dataInizio, 
-                                end: lezione.dataFine
-                            };
-                        });
-
-                    return eventiFormattati;
-
-                } catch (errore) {
-                    console.error("Errore nel fetch dell'orario:", errore);
-                    document.getElementById('calendario').innerHTML = 
-                        '<p style="text-align:center; color:#ff3b30; padding: 20px;">Impossibile caricare l\'orario.</p>';
-                    return [];
-                }
-                                        }
-
-
-
-        // ==========================================
-        // INIZIALIZZAZIONE CALENDARIO
-        // ==========================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const elementoCalendario = document.getElementById('calendario');
-
-            const calendario = new FullCalendar.Calendar(elementoCalendario, {
-                // Partiamo con la vista settimanale
-                initialView: 'timeGridWeek',
-                
-                // Nascondiamo i weekend per recuperare spazio prezioso su mobile
-                weekends: false, 
-                
-                // Impostiamo gli orari tipici delle lezioni (es. 08:00 - 20:00)
-                slotMinTime: '08:00:00',
-                slotMaxTime: '20:00:00',
-                
-                // Rimuoviamo la riga "tutto il giorno" (inutile per lezioni a orario)
-                allDaySlot: false,
-                
-                // Altezza automatica per scorrere la pagina in modo nativo su iPhone
-                height: 'auto',
-                
-                // Barra degli strumenti minimalista
-                headerToolbar: {
-                    left: 'prev,next',
-                    center: 'title',
-                    right: 'today' 
-                },
-
-                // Personalizzazione del testo dei pulsanti
-                buttonText: {
-                    today: 'Oggi'
-                },
-                
-                // Colleghiamo i dati: FullCalendar chiamerà la nostra funzione!
-                events: async function(info, successCallback, failureCallback) {
-                    // Chiamiamo la funzione creata nel Passo 2
-                    const eventi = await ottieniEventi();
-                    
-                    if (eventi.length > 0) {
-                        // Passiamo gli eventi al calendario
-                        successCallback(eventi);
-                    } else {
-                        // Se c'è un errore o nessun evento, passiamo un array vuoto
-                        failureCallback();
-                    }
-                },
-
-                // Stile degli eventi (blu iOS)
-                eventColor: 'var(--colore-accento)',
-                eventTextColor: '#ffffff',
-                eventBorderColor: 'transparent',
-            });
-
-            calendario.render();
-        });
+    calendario.render();
+});
     </script>
 </body>
 </html>
