@@ -80,7 +80,7 @@
             const urlAPIUniversita = 'https://unito.prod.up.cineca.it/api/Impegni/getImpegniCalendarioPubblico';
 
             // 2. Codifichiamo l'URL e lo uniamo al proxy CORS
-            const urlConProxy = `https://corsproxy.io/?${encodeURIComponent(urlAPIUniversita)}`;
+            const urlConProxy = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlAPIUniversita)}`;
 
             // 3. Scrivi qui i nomi delle materie che vuoi visualizzare
             const materieScelte = [
