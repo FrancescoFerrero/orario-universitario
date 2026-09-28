@@ -80,7 +80,7 @@
             const urlAPIUniversita = 'https://unito.prod.up.cineca.it/api/Impegni/getImpegniCalendarioPubblico';
 
             // 2. Codifichiamo l'URL e lo uniamo al proxy CORS
-            const urlConProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(urlAPIUniversita)}`;
+            const urlConProxy = `https://corsproxy.io/?${encodeURIComponent(urlAPIUniversita)}`;
 
             // 3. Scrivi qui i nomi delle materie che vuoi visualizzare
             const materieScelte = [
@@ -101,9 +101,7 @@
                     
                     const dataProxy = await response.json();
                     
-                    // Il proxy allOrigins restituisce il vero JSON sotto forma di stringa nel campo 'contents'
-                    const datiOrario = JSON.parse(dataProxy.contents);
-
+                    const datiOrario = await response.json();
                     console.log("Dati ricevuti dall'API:", datiOrario);
 
                     // ATTENZIONE: Questo percorso ("datiOrario.lezioni") dipende da come è strutturato 
