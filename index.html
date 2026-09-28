@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta tag fondamentale per evitare zoom indesiderati su iPhone -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orario Universitario</title>
+
+    <!-- FullCalendar v6 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <style>
+        :root {
+            --sfondo-pagina: #f5f5f7;
+            --sfondo-card: #ffffff;
+            --testo-principale: #1d1d1f;
+            --colore-accento: #007aff; /* Blu iOS */
+        }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            background-color: var(--sfondo-pagina);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, sans-serif;
+            color: var(--testo-principale);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Contenitore principale stile "Card" Apple */
+        #contenitore-app {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: var(--sfondo-card);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            padding: 16px;
+            /* Permette a FullCalendar di scorrere orizzontalmente se necessario su schermi molto stretti */
+            overflow-x: auto; 
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 8px;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Ottimizzazioni UI per FullCalendar su mobile */
+        .fc {
+            font-size: 13px;
+        }
+        .fc-toolbar-title {
+            font-size: 18px !important;
+            font-weight: 600;
+        }
+        .fc .fc-button-primary {
+            background-color: var(--colore-accento) !important;
+            border-color: var(--colore-accento) !important;
+            border-radius: 8px !important;
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="contenitore-app">
+        <h1>Il Mio Orario</h1>
+        <!-- Il calendario verrà iniettato qui da JavaScript -->
+        <div id="calendario"></div>
+    </div>
+
+    <script>
+            // ==========================================
+            // CONFIGURAZIONE UTENTE
+            // ==========================================
+
+            // 1. Inserisci l'URL dell'API della tua università (sostituisci questo di esempio)
+            const urlAPIUniversita = 'https://unito.prod.up.cineca.it/api/Impegni/getImpegniCalendarioPubblico';
+
+            // 2. Codifichiamo l'URL e lo uniamo al proxy CORS
+            const urlConProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(urlAPIUniversita)}`;
+
+            // 3. Scrivi qui i nomi delle materie che vuoi visualizzare
+            const materieScelte = [
+                "LFT - LINGUAGGI E FORMALI E TRADUTTORI",
+                "Reti & Sic A - RETI E SICUREZZA DELLE RETI",
+                "Eginn - ECONOMIA E GESTIONE DELLE TECNOLOGIE"
+            ];
+
+            // ==========================================
+            // LOGICA DI FETCH E FILTRAGGIO
+            // ==========================================
+
+            async function ottieniEventi() {
+                try {
+                    // Effettuiamo la chiamata tramite il proxy
+                    const response = await fetch(urlConProxy);
+                    if (!response.ok) throw new Error('Errore di connessione al proxy');
+                    
+                    const dataProxy = await response.json();
+                    
+                    // Il proxy allOrigins restituisce il vero JSON sotto forma di stringa nel campo 'contents'
+                    const datiOrario = JSON.parse(dataProxy.contents);
+
+                    console.log("Dati ricevuti dall'API:", datiOrario);
+
+                    // ATTENZIONE: Questo percorso ("datiOrario.lezioni") dipende da come è strutturato 
+                    // il JSON della tua università. Adattalo di conseguenza.
+                    const arrayLezioni = datiOrario.lezioni || datiOrario; 
+
+                    // 4. Filtriamo le materie e le formattiamo per FullCalendar
+                    const eventiFormattati = arrayLezioni
+                        .filter(lezione => {
+                            // Mantiene solo le lezioni il cui nome è presente in "materieScelte"
+                            // Usa toLowerCase() per evitare problemi con maiuscole/minuscole
+                            return materieScelte.some(materia => 
+                                lezione.nomeMateria.toLowerCase().includes(materia.toLowerCase())
+                            );
+                        })
+                        .map(lezione => {
+                            // Formato evento richiesto da FullCalendar.js
+                            return {
+                                title: `${lezione.nomeMateria} - ${lezione.aula}`,
+                                start: lezione.dataInizio, // deve essere in formato ISO 8601 (es: "2026-09-28T09:00:00")
+                                end: lezione.dataFine
+                            };
+                        });
+
+                    return eventiFormattati;
+
+                } catch (errore) {
+                    console.error("Errore nel fetch dell'orario:", errore);
+                    // Messaggio utente pulito, stile iOS
+                    document.getElementById('calendario').innerHTML = 
+                        '<p style="text-align:center; color:#ff3b30; padding: 20px;">Impossibile caricare l\'orario. Riprova più tardi.</p>';
+                    return [];
+                }
+        }
+
+
+
+        // ==========================================
+        // INIZIALIZZAZIONE CALENDARIO
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const elementoCalendario = document.getElementById('calendario');
+
+            const calendario = new FullCalendar.Calendar(elementoCalendario, {
+                // Partiamo con la vista settimanale
+                initialView: 'timeGridWeek',
+                
+                // Nascondiamo i weekend per recuperare spazio prezioso su mobile
+                weekends: false, 
+                
+                // Impostiamo gli orari tipici delle lezioni (es. 08:00 - 20:00)
+                slotMinTime: '08:00:00',
+                slotMaxTime: '20:00:00',
+                
+                // Rimuoviamo la riga "tutto il giorno" (inutile per lezioni a orario)
+                allDaySlot: false,
+                
+                // Altezza automatica per scorrere la pagina in modo nativo su iPhone
+                height: 'auto',
+                
+                // Barra degli strumenti minimalista
+                headerToolbar: {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: 'today' 
+                },
+
+                // Personalizzazione del testo dei pulsanti
+                buttonText: {
+                    today: 'Oggi'
+                },
+                
+                // Colleghiamo i dati: FullCalendar chiamerà la nostra funzione!
+                events: async function(info, successCallback, failureCallback) {
+                    // Chiamiamo la funzione creata nel Passo 2
+                    const eventi = await ottieniEventi();
+                    
+                    if (eventi.length > 0) {
+                        // Passiamo gli eventi al calendario
+                        successCallback(eventi);
+                    } else {
+                        // Se c'è un errore o nessun evento, passiamo un array vuoto
+                        failureCallback();
+                    }
+                },
+
+                // Stile degli eventi (blu iOS)
+                eventColor: 'var(--colore-accento)',
+                eventTextColor: '#ffffff',
+                eventBorderColor: 'transparent',
+            });
+
+            calendario.render();
+        });
+    </script>
+</body>
+</html>
