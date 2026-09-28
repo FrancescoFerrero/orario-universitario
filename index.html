@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Orario Universitario</title>
 
     <!-- FullCalendar v6 CDN e Lingua Italiana -->
@@ -19,12 +19,13 @@
             --text-main: #1C1C1E;
             --text-muted: #8E8E93;
             --accent-blue: #007AFF;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
         }
 
+        /* --- Ottimizzazione Layout iPhone 16 (Safe Areas) --- */
         body {
             margin: 0;
-            padding: 16px;
+            padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 24px) 16px;
             background-color: var(--bg-body);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             color: var(--text-main);
@@ -35,7 +36,7 @@
             max-width: 900px;
             margin: 0 auto;
             background-color: var(--bg-card);
-            border-radius: 20px;
+            border-radius: 24px;
             box-shadow: var(--shadow);
             padding: 16px;
             overflow-x: auto;
@@ -45,20 +46,22 @@
         .fc { font-size: 13px; }
         
         .fc-toolbar-title { 
-            font-size: 20px !important; 
+            font-size: 22px !important; 
             font-weight: 700; 
             letter-spacing: -0.5px;
             text-transform: capitalize; 
+            padding-top: 8px;
         }
 
+        /* --- Ergonomia Bottoni Bottom Navigation --- */
         .fc .fc-button-primary {
             background-color: #F2F2F7 !important;
             color: var(--accent-blue) !important;
             border: none !important;
             font-weight: 600 !important;
             text-transform: capitalize;
-            box-shadow: none !important;
-            padding: 8px 14px !important;
+            padding: 12px 20px !important; 
+            border-radius: 12px !important;
             transition: all 0.2s ease;
         }
 
@@ -67,46 +70,46 @@
         }
 
         .fc .fc-button-primary:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
             background-color: #D1D1D6 !important;
         }
 
         .fc-button-group {
             background-color: #F2F2F7;
-            border-radius: 10px;
-            overflow: hidden;
-            padding: 2px;
+            border-radius: 14px;
+            padding: 3px;
         }
         
         .fc-button-group .fc-button-primary {
             background-color: transparent !important;
-            border-radius: 8px !important;
+            border-radius: 10px !important;
             margin: 0 2px !important;
         }
 
-        .fc-toolbar-chunk .fc-today-button {
-            border-radius: 10px !important;
-        }
-        
         .fc .fc-button-primary:disabled {
             opacity: 0.5;
             cursor: default;
             transform: none;
         }
         
+        /* Fix Margine inferiore per la toolbar in basso */
+        .fc-footer-toolbar {
+            margin-top: 24px !important;
+            padding-bottom: 8px;
+        }
+        
         /* --- FIX LARGHEZZA EVENTI --- */
-        /* Rimuove lo spazio di default a destra del blocco */
         .fc-timegrid-event-harness {
             right: 0 !important; 
         }
 
         .fc-v-event {
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             cursor: pointer;
             transition: transform 0.1s ease;
-            width: 100% !important; /* Espande al massimo l'evento */
+            width: 100% !important;
         }
         .fc-v-event:active { transform: scale(0.96); }
 
@@ -118,21 +121,22 @@
             left: 0; top: 0;
             width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
 
         #modal-contenuto {
             background-color: var(--bg-card);
-            margin: 20vh auto;
+            margin: 25vh auto;
             padding: 24px;
-            border-radius: 20px;
+            border-radius: 24px;
             width: 85%;
             max-width: 400px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             transform: translateY(20px);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         #modal-sfondo.aperto { display: block; opacity: 1; }
@@ -140,29 +144,33 @@
 
         .chiudi-modal {
             float: right;
-            background: #e5e5ea;
-            color: #8e8e93;
-            width: 28px; height: 28px;
-            border-radius: 14px;
+            background: #F2F2F7;
+            color: #8E8E93;
+            width: 30px; height: 30px;
+            border-radius: 15px;
             text-align: center;
-            line-height: 28px;
-            font-size: 16px;
+            line-height: 30px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
+            transition: background 0.2s;
         }
+        
+        .chiudi-modal:active { background: #E5E5EA; }
 
         #modal-titolo {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
             margin-top: 0;
-            margin-bottom: 16px;
-            padding-right: 30px;
-            line-height: 1.3;
+            margin-bottom: 20px;
+            padding-right: 36px;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
         }
 
-        .modal-info { font-size: 15px; margin-bottom: 12px; }
-        .modal-info span.label { font-weight: 600; display: block; color: var(--text-main); }
-        .modal-info span.valore { font-weight: normal; color: var(--text-muted); display: block; margin-top: 2px;}
+        .modal-info { font-size: 15px; margin-bottom: 14px; }
+        .modal-info span.label { font-weight: 600; display: block; color: var(--text-main); margin-bottom: 4px; }
+        .modal-info span.valore { font-weight: 400; color: var(--text-muted); display: block; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -188,7 +196,7 @@
             </div>
 
             <div class="modal-info">
-                <span class="label">Docente / Dettagli:</span>
+                <span class="label">Docente:</span>
                 <span class="valore" id="modal-docente"></span>
             </div>
         </div>
@@ -196,6 +204,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Link diretto all'iCal (nessun CORS proxy necessario)
         const linkICal = 'https://unito.prod.up.cineca.it:443/api/FiltriICal/impegniICal?id=6abacd7dc3623c00c6658078';
         
         const materieScelte = [
@@ -204,6 +213,7 @@
             "Eginn - ECONOMIA E GESTIONE DELLE TECNOLOGIE"
         ];
 
+        // Colori in stile iOS
         const paletteColori = ['#FF9500', '#FF2D55', '#5856D6', '#34C759', '#32ADE6'];
         const elementoCalendario = document.getElementById('calendario');
 
@@ -220,10 +230,16 @@
             eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
             dayHeaderFormat: { weekday: 'short', day: 'numeric' },
 
+            // NAVIGAZIONE IPHONE 16: Titolo in alto, bottoni in basso per il pollice
             headerToolbar: {
-                left: 'prev,next',
+                left: '',
                 center: 'title',
-                right: 'today' 
+                right: '' 
+            },
+            footerToolbar: {
+                left: 'prev,next',
+                center: '',
+                right: 'today'
             },
 
             events: {
@@ -249,33 +265,36 @@
             eventContent: function(info) {
                 let titolo = info.event.title;
                 
+                // Estrae solo il nome dell'aula pulito
                 let stringaAula = info.event.extendedProps.location || ''; 
                 let aulaPura = stringaAula.split('-')[0].split(',')[0].trim();
 
                 let contenitore = document.createElement('div');
                 contenitore.style.display = 'flex';
                 contenitore.style.flexDirection = 'column';
-                contenitore.style.height = '100%'; /* Usa tutta l'altezza disponibile */
-                contenitore.style.padding = '2px 4px'; /* Padding ridotto per evitare il taglio del testo */
+                contenitore.style.height = '100%'; 
+                contenitore.style.padding = '4px 6px'; 
                 contenitore.style.overflow = 'hidden';
 
                 let elOrario = document.createElement('div');
                 elOrario.innerText = info.timeText;
                 elOrario.style.fontSize = '11px';
                 elOrario.style.fontWeight = '500';
+                elOrario.style.opacity = '0.9';
 
                 let elTitolo = document.createElement('div');
                 elTitolo.innerText = titolo;
                 elTitolo.style.fontWeight = '600';
                 elTitolo.style.fontSize = '12px';
-                elTitolo.style.lineHeight = '1.1';
-                elTitolo.style.flexGrow = '1'; /* Spinge l'aula verso il basso se c'è spazio, altrimenti si adatta */
+                elTitolo.style.lineHeight = '1.2';
+                elTitolo.style.marginTop = '2px';
+                elTitolo.style.flexGrow = '1';
 
                 let elAula = document.createElement('div');
                 elAula.innerText = aulaPura; 
-                elAula.style.fontSize = '11px';
-                elAula.style.opacity = '0.9';
-                elAula.style.fontWeight = '500';
+                elAula.style.fontSize = '12px';
+                elAula.style.fontWeight = '600';
+                elAula.style.marginTop = '4px';
 
                 contenitore.appendChild(elOrario);
                 contenitore.appendChild(elTitolo);
@@ -285,8 +304,6 @@
             },
 
             eventClick: function(info) {
-
-                console.log("Dati completi della lezione:", info.event.extendedProps);
                 info.jsEvent.preventDefault();
                 
                 const opzioniOra = { hour: '2-digit', minute: '2-digit', hour12: false };
